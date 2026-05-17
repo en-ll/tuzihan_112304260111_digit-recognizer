@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写数字识别 - 使用您的模型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .model-info {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .row {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .canvas-section { flex: 1; min-width: 280px; max-width: 400px; }
+        .result-section { flex: 1; min-width: 280px; max-width: 400px; }
+        #canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: crosshair;
+            background: white;
+            display: block;
+            margin: 0 auto;
+        }
+        .controls { text-align: center; margin-top: 20px; }
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        .btn-clear { background: #f0f0f0; color: #333; }
+        .btn-clear:hover { background: #e0e0e0; }
+        .btn-predict {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-predict:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .result-label { font-size: 14px; color: #666; margin-bottom: 5px; }
+        .result-value { font-size: 32px; font-weight: bold; color: #333; }
+        .prob-chart { margin-top: 20px; }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .bar-container {
+            display: flex;
+            align-items: flex-end;
+            height: 150px;
+            gap: 5px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px 5px 0 0;
+            transition: height 0.3s ease;
+            position: relative;
+            min-height: 5px;
+        }
+        .bar:hover::after {
+            content: attr(data-value);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+        }
+        .digit-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            margin-top: 10px;
+        }
+        .digit-label {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .image-upload-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+        }
+        #uploaded-image {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: block;
+            object-fit: contain;
+        }
+        #image-upload { display: none; }
+        .upload-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f0f0f0;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-label:hover {
+            background: #e0e0e0;
+            border-color: #667eea;
+        }
+        .model-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .model-status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .model-status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        .model-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 手写数字识别</h1>
+        <div class="model-info">使用您训练的 DeepCNN 模型 | 验证准确率: 99.55%</div>
+        
+        <div class="model-status loading" id="model-status">
+            <span class="loading-spinner"></span> 正在连接后端服务...
+        </div>
+        
+        <div class="main-content">
+            <div class="row">
+                <div class="canvas-section">
+                    <canvas id="canvas" width="280" height="280"></canvas>
+                    <div class="controls">
+                        <button class="btn btn-clear" onclick="clearCanvas()">清除画板</button>
+                        <button class="btn btn-predict" onclick="predict()" disabled id="predict-btn">
+                            <span class="loading-spinner" style="display: none;"></span>
+                            开始识别
+                        </button>
+                    </div>
+                </div>
+                <div class="result-section">
+                    <div class="result-box">
+                        <div class="result-label">预测结果</div>
+                        <div id="prediction" class="result-value">?</div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">置信度</div>
+                        <div id="confidence" class="result-value">0%</div>
+                    </div>
+                    <div class="prob-chart">
+                        <div class="chart-title">数字概率分布</div>
+                        <div class="bar-container" id="bar-container"></div>
+                        <div class="digit-labels">
+                            <span class="digit-label">0</span><span class="digit-label">1</span><span class="digit-label">2</span>
+                            <span class="digit-label">3</span><span class="digit-label">4</span><span class="digit-label">5</span>
+                            <span class="digit-label">6</span><span class="digit-label">7</span><span class="digit-label">8</span>
+                            <span class="digit-label">9</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-upload-section">
+                <label for="image-upload" class="upload-label">📷 或上传图片识别</label>
+                <input type="file" id="image-upload" accept="image/*" disabled id="upload-input">
+                <img id="uploaded-image" src="" alt="上传的图片" style="display: none;">
+                <div class="controls">
+                    <button class="btn btn-predict" onclick="predictFromImage()" style="display: none;" id="predict-image-btn" disabled>识别图片</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:5000/predict';
+        let currentProbabilities = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+        
+        // 检查后端服务是否可用
+        async function checkServer() {
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({image: ''}), headers: {'Content-Type': 'application/json'} });
+                document.getElementById('model-status').textContent = '✅ 后端服务已连接！使用您训练的模型';
+                document.getElementById('model-status').className = 'model-status ready';
+                document.getElementById('predict-btn').disabled = false;
+                document.getElementById('upload-input').disabled = false;
+                document.getElementById('predict-image-btn').disabled = false;
+            } catch (error) {
+                document.getElementById('model-status').textContent = '⚠️ 后端服务未连接，请确保Flask服务已启动';
+                document.getElementById('model-status').className = 'model-status error';
+                setTimeout(checkServer, 2000);
+            }
+        }
+        
+        // 画板相关
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 15;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            [lastX, lastY] = [x, y];
+        }
+        
+        function stopDrawing() { isDrawing = false; }
+        
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            updateResults(null, 0, [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]);
+        }
+        
+        // 预测函数
+        async function predict() {
+            const btn = document.getElementById('predict-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> 识别中...';
+            
+            try {
+                // 将画布转换为base64
+                const base64Image = canvas.toDataURL('image/png').split(',')[1];
+                
+                // 发送请求到后端
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert('识别失败: ' + result.error);
+                } else {
+                    currentProbabilities = Object.values(result.probabilities);
+                    updateResults(result.prediction, result.confidence, currentProbabilities);
+                }
+            } catch (error) {
+                alert('网络错误，请确保后端服务已启动');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '开始识别';
+            }
+        }
+        
+        function updateResults(predicted, confidence, probs) {
+            if (predicted === null) {
+                document.getElementById('prediction').textContent = '?';
+                document.getElementById('confidence').textContent = '0%';
+            } else {
+                document.getElementById('prediction').textContent = predicted;
+                document.getElementById('confidence').textContent = (confidence * 100).toFixed(1) + '%';
+            }
+            
+            const barContainer = document.getElementById('bar-container');
+            barContainer.innerHTML = '';
+            
+            probs.forEach((prob, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = (prob * 100) + '%';
+                bar.setAttribute('data-value', (prob * 100).toFixed(1) + '%');
+                if (index === predicted) {
+                    bar.style.background = 'linear-gradient(180deg, #10b981 0%, #059669 100%)';
+                }
+                barContainer.appendChild(bar);
+            });
+        }
+        
+        // 图片上传相关
+        const imageUpload = document.getElementById('image-upload');
+        const uploadedImage = document.getElementById('uploaded-image');
+        const predictImageBtn = document.getElementById('predict-image-btn');
+        
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage.src = event.target.result;
+                    uploadedImage.style.display = 'block';
+                    predictImageBtn.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        async function predictFromImage() {
+            if (!uploadedImage.src) return;
+            
+            const btn = document.getElementById('predict-image-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> 识别中...';
+            
+            try {
+                // 将图片绘制到canvas
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 280;
+                tempCanvas.height = 280;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.fillStyle = 'white';
+                tempCtx.fillRect(0, 0, 280, 280);
+                
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.src = uploadedImage.src;
+                });
+                
+                tempCtx.drawImage(img, 0, 0, 280, 280);
+                const base64Image = tempCanvas.toDataURL('image/png').split(',')[1];
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert('识别失败: ' + result.error);
+                } else {
+                    currentProbabilities = Object.values(result.probabilities);
+                    updateResults(result.prediction, result.confidence, currentProbabilities);
+                }
+            } catch (error) {
+                alert('网络错误，请确保后端服务已启动');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '识别图片';
+            }
+        }
+        
+        // 初始化条形图
+        function initBars() {
+            const probs = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+            const barContainer = document.getElementById('bar-container');
+            
+            probs.forEach(prob => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = (prob * 100) + '%';
+                bar.setAttribute('data-value', (prob * 100).toFixed(1) + '%');
+                barContainer.appendChild(bar);
+            });
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            initBars();
+            checkServer();
+        });
+    </script>
+</body>
+</html>
