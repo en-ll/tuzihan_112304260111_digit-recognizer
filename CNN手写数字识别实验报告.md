@@ -210,7 +210,7 @@ project/
 
 | 提交项         | 内容                       |
 | ----------- | ------------------------ |
-| GitHub 仓库地址 | 请创建GitHub仓库后填写           |
+| GitHub 仓库地址 | https://github.com/en-ll/tuzihan_112304260111_digit-recognizer           |
 | 在线访问链接      | 部署到HuggingFace Spaces后填写 |
 
 **Web应用功能说明：**
@@ -229,7 +229,7 @@ project/
 
 ### 2.6 提交清单
 
-- [ ] GitHub 仓库地址
+- [x] GitHub 仓库地址
 - [ ] 在线访问链接（可正常打开）
 - [x] 页面截图与预测结果截图
 
