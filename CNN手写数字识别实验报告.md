@@ -82,21 +82,21 @@
 
 ### 1.4 最终提交模型
 
-在对比实验的基础上，选择了 Exp4 的配置作为最终提交模型（Adam + 数据增强 + Early Stopping），以达到最佳泛化性能。
+在对比实验的基础上，选择了 Exp4 的配置作为最终提交模型（AdamW + 数据增强 + Early Stopping），以达到最佳泛化性能。
 
 **最终提交模型超参数配置：**
 
 | 配置项                 | 你的设置                                                |
 | ------------------- | --------------------------------------------------- |
-| 优化器                 | Adam                                                |
+| 优化器                 | AdamW                                               |
 | 学习率                 | 0.001                                               |
 | Batch Size          | 64                                                  |
 | 训练 Epoch 数          | 15（实际在第10轮早停）                                       |
 | 是否使用数据增强            | 是                                                   |
 | 数据增强方式              | RandomRotation(10) + RandomAffine + RandomErasing   |
 | 是否使用 Early Stopping | 是                                                   |
-| 是否使用学习率调度器          | 是（CosineAnnealingLR）                                |
-| 其他调整                | Label Smoothing (0.1) + AdamW + Weight Decay (0.01) |
+| 是否使用学习率调度器          | 是（CosineAnnealingWarmRestarts）                                |
+| 其他调整                | Label Smoothing (0.1) + Weight Decay (0.01)          |
 | **Kaggle Score**    | 0.99557                                             |
 
 ### 1.5 Loss 曲线
@@ -130,7 +130,7 @@
 - 较大的学习率（如0.01用于SGD）虽然能让训练快速下降，但可能导致Loss震荡和训练不稳定。
 - 较小的学习率（如0.001用于Adam）能让训练更稳定，Loss曲线更平滑，但需要更多的epoch才能收敛。
 - 本实验中，Adam使用0.001的学习率能够很好地平衡收敛速度和稳定性。
-- 学习率调度器（CosineAnnealingLR）能够在训练后期自动降低学习率，帮助模型更好地收敛到最优解。
+- 学习率调度器（CosineAnnealingWarmRestarts）能够在训练后期自动降低学习率，帮助模型更好地收敛到最优解。
 
 **Q3：Batch Size 对模型泛化能力有什么影响？**
 
@@ -208,10 +208,10 @@ project/
 
 ### 2.5 提交信息
 
-| 提交项         | 内容                       |
-| ----------- | ------------------------ |
-| GitHub 仓库地址 | 请创建GitHub仓库后填写           |
-| 在线访问链接      | 部署到HuggingFace Spaces后填写 |
+| 提交项         | 内容                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------- |
+| GitHub 仓库地址 | [en-ll/tuzihan\_112304260111\_digit-recognizer](https://github.com/en-ll/tuzihan_112304260111_digit-recognizer) |
+| 在线访问链接      | 部署到HuggingFace Spaces后填写                                                                                        |
 
 **Web应用功能说明：**
 
@@ -229,7 +229,7 @@ project/
 
 ### 2.6 提交清单
 
-- [ ] GitHub 仓库地址
+- [x] GitHub 仓库地址
 - [ ] 在线访问链接（可正常打开）
 - [x] 页面截图与预测结果截图
 
