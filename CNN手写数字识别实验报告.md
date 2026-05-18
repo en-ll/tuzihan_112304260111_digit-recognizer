@@ -82,22 +82,22 @@
 
 ### 1.4 最终提交模型
 
-在对比实验的基础上，选择了 Exp4 的配置作为最终提交模型（AdamW + 数据增强 + Early Stopping），以达到最佳泛化性能。
+在对比实验的基础上，选择了 Exp4 的配置进一步优化作为最终提交模型（AdamW + 数据增强 + Early Stopping），以达到最佳泛化性能。
 
 **最终提交模型超参数配置：**
 
-| 配置项                 | 你的设置                                                |
-| ------------------- | --------------------------------------------------- |
-| 优化器                 | AdamW                                               |
-| 学习率                 | 0.001                                               |
-| Batch Size          | 64                                                  |
-| 训练 Epoch 数          | 15（实际在第10轮早停）                                       |
-| 是否使用数据增强            | 是                                                   |
-| 数据增强方式              | RandomRotation(10) + RandomAffine + RandomErasing   |
-| 是否使用 Early Stopping | 是                                                   |
-| 是否使用学习率调度器          | 是（CosineAnnealingWarmRestarts）                                |
-| 其他调整                | Label Smoothing (0.1) + Weight Decay (0.01)          |
-| **Kaggle Score**    | 0.99557                                             |
+| 配置项                 | 你的设置                                              |
+| ------------------- | ------------------------------------------------- |
+| 优化器                 | AdamW                                             |
+| 学习率                 | 0.001                                             |
+| Batch Size          | 64                                                |
+| 训练 Epoch 数          | 15（实际在第10轮早停）                                     |
+| 是否使用数据增强            | 是                                                 |
+| 数据增强方式              | RandomRotation(10) + RandomAffine + RandomErasing |
+| 是否使用 Early Stopping | 是                                                 |
+| 是否使用学习率调度器          | 是（CosineAnnealingWarmRestarts）                    |
+| 其他调整                | Label Smoothing (0.1) + Weight Decay (0.01)       |
+| **Kaggle Score**    | 0.99557                                           |
 
 ### 1.5 Loss 曲线
 
